@@ -1,41 +1,76 @@
+
 #include <WiFi.h>
 #include "time.h"
 
-// Credenziali Wi-Fi per la connessione a Internet
-const char* ssid     = "NOME_RETE_WIFI";
+// Credenziali Wi-Fi
+const char* ssid = "NOME_RETE_WIFI";
 const char* password = "PASSWORD_WIFI";
 
-// Server NTP e configurazione fuso orario Italia
+// Server NTP
 const char* ntpServer = "pool.ntp.org";
-const long  gmtOffset_sec = 3600;      // UTC +1 (Ora solare in Italia)
-const int   daylightOffset_sec = 3600; // +1 ora durante l'ora legale
 
-void printLocalTime() {
-  struct tm timeinfo;
-  if (!getLocalTime(&timeinfo)) {
-    Serial.println("Errore: Impossibile ottenere l'ora da NTP!");
-    return;
-  }
-  // Stampa l'ora formattata: GG/MM/AAAA - HH:MM:SS
-  Serial.println(&timeinfo, "Ora attuale: %d/%m/%Y - %H:%M:%S");
-}
+// Fuso orario italiano
+const char* timezone =
+  "CET-1CEST,M3.5.0/2,M10.5.0/3";
 
 void setup() {
+
   Serial.begin(115200);
 
-  // Connessione al Wi-Fi
-  Serial.print("Connessione a ");
-  Serial.println(ssid);
+  Serial.println("--- TEST OROLOGIO NTP ---");
+
+  // Connessione Wi-Fi
   WiFi.begin(ssid, password);
 
-  while (WiFi.status() != WL_CONNECTED) {
+  Serial.print("Connessione Wi-Fi");
+
+  int tentativi = 0;
+
+  while (WiFi.status() != WL_CONNECTED &&
+         tentativi < 30) {
+
     delay(500);
     Serial.print(".");
-  }
-  Serial.println("\nWi-Fi Connesso!");
 
-  // Inizializzazione e sincronizzazione dell'ora via NTP
-  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+    tentativi++;
+
+  }
+
+  if (WiFi.status() != WL_CONNECTED) {
+
+    Serial.println("\nConnessione Wi-Fi fallita!");
+    return;
+
+  }
+
+  Serial.println("\nWi-Fi connesso!");
+
+  // Configurazione orologio
+  configTzTime(timezone, ntpServer);
+
+  Serial.println("Sincronizzazione orologio...");
+}
+
+void loop() {
+
+  struct tm timeinfo;
+
+  if (WiFi.status() == WL_CONNECTED &&
+      getLocalTime(&timeinfo, 5000)) {
+
+    Serial.println(
+      &timeinfo,
+      "Data e ora: %d/%m/%Y - %H:%M:%S"
+    );
+
+  } else {
+
+    Serial.println("Ora non disponibile!");
+
+  }
+
+  delay(1000);
+
 }
 
 void loop() {
