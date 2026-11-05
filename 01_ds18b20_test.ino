@@ -2,7 +2,7 @@
 #include <DallasTemperature.h>
 
 // Pin del sensore DS18B20
-#define ONE_WIRE_BUS 15
+#define ONE_WIRE_BUS 4
 
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
