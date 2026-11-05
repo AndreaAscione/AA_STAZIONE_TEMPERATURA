@@ -1,37 +1,62 @@
 #include <WiFi.h>
 
-// Sostituisci con le credenziali della tua rete
+// Credenziali Wi-Fi
 const char* ssid = "NOME_RETE_WIFI";
 const char* password = "PASSWORD_WIFI";
 
 void setup() {
+
   Serial.begin(115200);
-  delay(10);
 
   Serial.println();
+  Serial.println("--- TEST WIFI CLIENT ---");
+
   Serial.print("Connessione a: ");
   Serial.println(ssid);
 
   WiFi.begin(ssid, password);
 
-  // Attesa connessione
-  while (WiFi.status() != WL_CONNECTED) {
+  int tentativi = 0;
+
+  while (WiFi.status() != WL_CONNECTED &&
+         tentativi < 30) {
+
     delay(500);
     Serial.print(".");
+
+    tentativi++;
+
   }
 
-  Serial.println("");
-  Serial.println("Wi-Fi Connesso!");
-  Serial.print("Indirizzo IP dell'ESP32: ");
-  Serial.println(WiFi.localIP());
+  if (WiFi.status() == WL_CONNECTED) {
+
+    Serial.println();
+    Serial.println("Wi-Fi connesso!");
+
+    Serial.print("Indirizzo IP ESP32: ");
+    Serial.println(WiFi.localIP());
+
+  } else {
+
+    Serial.println();
+    Serial.println("Errore connessione Wi-Fi!");
+
+  }
+
 }
 
 void loop() {
-  // Verifica se la connessione è ancora attiva
+
   if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("Stato Wi-Fi: Connesso");
+
+    Serial.println("Stato Wi-Fi: CONNESSO");
+
   } else {
-    Serial.println("Stato Wi-Fi: Disconnesso");
+
+    Serial.println("Stato Wi-Fi: DISCONNESSO");
+
   }
+
   delay(5000);
+
 }
