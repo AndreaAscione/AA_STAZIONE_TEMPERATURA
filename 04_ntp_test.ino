@@ -1,79 +1,67 @@
-
 #include <WiFi.h>
 #include "time.h"
 
-// Credenziali Wi-Fi
+// Credenziali Wi-Fi (usa le stesse che hanno appena funzionato)
 const char* ssid = "NOME_RETE_WIFI";
 const char* password = "PASSWORD_WIFI";
 
-// Server NTP
+// Server NTP e fuso orario italiano (gestisce in automatico ora solare e legale)
 const char* ntpServer = "pool.ntp.org";
+const char* timeZone = "CET-1CEST,M3.5.0,M10.5.0/3";
 
-// Fuso orario italiano
-const char* timezone =
-  "CET-1CEST,M3.5.0/2,M10.5.0/3";
+void stampaDataOra() {
+  struct tm timeinfo;
+  
+  if (!getLocalTime(&timeinfo)) {
+    Serial.println("Errore: impossibile ottenere l'ora NTP!");
+    return;
+  }
+
+  // Formatta data e ora in formato italiano (GG/MM/AAAA HH:MM:SS)
+  char buffer[64];
+  strftime(buffer, sizeof(buffer), "%d/%m/%Y %H:%M:%S", &timeinfo);
+  Serial.print("Data e ora attuale: ");
+  Serial.println(buffer);
+}
 
 void setup() {
-
   Serial.begin(115200);
+  delay(2000); // Attesa stabilizzazione seriale USB
 
-  Serial.println("--- TEST OROLOGIO NTP ---");
+  Serial.println("\n--- TEST SINCRONIZZAZIONE ORARIO NTP ---");
 
-  // Connessione Wi-Fi
+  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
-
-  Serial.print("Connessione Wi-Fi");
+  Serial.print("Connessione a ");
+  Serial.print(ssid);
 
   int tentativi = 0;
-
-  while (WiFi.status() != WL_CONNECTED &&
-         tentativi < 30) {
-
+  while (WiFi.status() != WL_CONNECTED && tentativi < 30) {
     delay(500);
     Serial.print(".");
-
     tentativi++;
-
   }
 
-  if (WiFi.status() != WL_CONNECTED) {
-
-    Serial.println("\nConnessione Wi-Fi fallita!");
-    return;
-
-  }
-
-  Serial.println("\nWi-Fi connesso!");
-
-  // Configurazione orologio
-  configTzTime(timezone, ntpServer);
-
-  Serial.println("Sincronizzazione orologio...");
-}
-
-void loop() {
-
-  struct tm timeinfo;
-
-  if (WiFi.status() == WL_CONNECTED &&
-      getLocalTime(&timeinfo, 5000)) {
-
-    Serial.println(
-      &timeinfo,
-      "Data e ora: %d/%m/%Y - %H:%M:%S"
-    );
-
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("\nWi-Fi connesso!");
+    
+    // Sincronizzazione con server NTP e fuso orario italiano
+    configTzTime(timeZone, ntpServer);
+    Serial.println("Sincronizzazione ora in corso...");
+    delay(2000);
+    
+    stampaDataOra();
   } else {
-
-    Serial.println("Ora non disponibile!");
-
+    Serial.println("\nErrore connessione Wi-Fi!");
   }
-
-  delay(1000);
-
 }
 
 void loop() {
-  delay(1000);
-  printLocalTime(); // Stampa l'ora aggiornata ogni secondo
+  if (WiFi.status() == WL_CONNECTED) {
+    stampaDataOra();
+  } else {
+    Serial.println("Wi-Fi disconnesso!");
+  }
+  
+  delay(1000); // Stampa ogni secondo
 }
